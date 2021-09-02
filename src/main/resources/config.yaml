@@ -1,0 +1,8 @@
+http:
+  port: "8081"
+  
+db:
+  url: jdbc:postgresql://localhost:5432/mule
+  driver: org.postgresql.Driver
+  user: postgres
+  password: admin

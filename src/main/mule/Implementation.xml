@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="e10eba1c-c7b0-4780-9bc4-c4c2e2e2c737" >
+		<db:generic-connection url="${db.url}" driverClassName="${db.driver}" user="${db.user}" password="${db.password}" />
+	</db:config>
+	<flow name="GetAllEmployee" doc:id="3cf1ea1a-0430-4174-a014-9672c8daa4f4" >
+		<db:select doc:name="Select" doc:id="63fcd6fd-7038-42a9-aeee-3c2452e2e561" config-ref="Database_Config1">
+			<db:sql ><![CDATA[select * from employee;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="566f70fb-d596-408b-900f-c719e8d296e0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="Get_Employee_by_ID" doc:id="6e71bec6-c80c-41c5-87d6-e14a9747a98d" >
+		<db:select doc:name="Select" doc:id="511af9d3-286b-4ba5-a070-2fbf69abaf9d" config-ref="Database_Config1" >
+			<db:sql ><![CDATA[select * from employee where eid =:id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: attributes.uriParams.eid
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="7de21989-76e1-4ba8-ab45-febae465d008" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="Delete_Employee_data" doc:id="5ed11aa4-24e0-4a27-94e4-5d06a9a7b23a" >
+		<db:delete doc:name="Delete" doc:id="73117556-27ae-4674-872a-0336ff0ce6e5" config-ref="Database_Config1">
+			<db:sql ><![CDATA[delete from employee where eid=:id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: attributes.uriParams.eid
+}]]]></db:input-parameters>
+		</db:delete>
+	</flow>
+	<flow name="Post_Employee_data" doc:id="b1aa926a-e30a-44de-bee3-7d87e10f564c" >
+		<ee:transform doc:name="Transform Message" doc:id="f7f7549d-c35d-4665-be95-f6a55990f41a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="7b04edb2-ba6c-44a5-8825-add53a9adc8e" config-ref="Database_Config1">
+			<db:sql><![CDATA[insert into employee values(:eid,:empname, :empdesignation,:email,:phone, :joindate);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	eid: payload.eid,
+	empname:payload.empname,
+	empdesignation: payload.empdesignation,
+	email: payload.email,
+	phone: payload.phone,
+	joindate: payload.joindate,
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="2170014b-f8a9-47ad-8d5e-3d79250d9470" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.empname 
+//+""+payload.empname
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="Update_Employee_data" doc:id="009399e1-42d4-4cfe-a305-aafb47de5db4" >
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="f809ed5e-b749-4b97-96d0-87888dd6b58f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:update doc:name="Update" doc:id="dcc67cbb-5ab5-4c15-adf9-643e458791b8" config-ref="Database_Config1">
+			<db:sql ><![CDATA[update employee SET empname =:empname, empdesignation =:empdesignation,
+email =:email,phone =:phone,joindate =:joindate where eid =:eid;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	eid: payload.eid,
+	empname:payload.empname,
+	empdesignation: payload.empdesignation,
+	email: payload.email,
+	phone: payload.phone,
+	joindate: payload.joindate,
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Copy_of_Copy_of_Transform Message" doc:id="917f9ece-6301-4a23-8864-f840e123afa5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
